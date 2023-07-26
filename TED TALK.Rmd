@@ -1,0 +1,282 @@
+---
+title: "MA331-Report: 2211539"
+author: "Ogungboyega, Temitope"
+subtitle: TED Talks by Speaker Dan Ariely and Speaker Jane Goodall
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+### Don't delete this setup code chunk from your file
+knitr::opts_chunk$set(echo = FALSE, message = NULL, warning = FALSE, comment = NULL)   ## DON'T ALTER THIS: this is to prevent printing the code or any unnecessary addition in your final "html" report file.
+
+# You can extend this list below to load all the packages required for your analyses:
+#====================================================================================
+
+library(tidyverse)
+library(tidytext)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(wordcloud)
+library(stringr)
+library(ggrepel)
+library(tidyr)
+library(textdata)
+library(plotly)
+library(ggpubr)
+library(dsEssex)
+library(dplyr)
+library(tidytext)
+library(wordcloud)
+library(ggplot2)
+library(dplyr)
+library(tidytext)
+library(wordcloud)
+library(ggplot2)
+library(tidyverse)
+library(wordcloud)
+library(RColorBrewer)
+library(SnowballC)
+library(tm)
+library(wordcloud2)
+library(tidyverse)
+library(tidytext)
+library(wordcloud)
+library(ggwordcloud)
+
+
+# load the 'ted_talks' data
+#=========================
+data(ted_talks)
+load(file='ted_talks.rda')
+
+```
+
+<span style="color: red;"> 
+
+
+<style>
+body {
+  text-align: justify;
+}
+</style>
+
+
+## Introduction
+
+This report analyses the speeches of two renowned speakers, Jane Goodall and Dan Ariely, and aims to provide a deeper understanding of their communication styles and underlying messages. The speeches under examination are:
+
+"What Separates Us from Chimpanzees?" by Jane Goodall (2002)
+
+"Our Buggy Moral Code" by Dan Ariely (2009)
+
+"Beware Conflicts of Interest" by Dan Ariely (2013)
+
+"How Equal Do We Want the World to Be? You'd Be Surprised" by Dan Ariely (2015)
+
+To achieve this aim, the report will:
+
+1. Identify the most common words and themes used in each TED talk
+
+2. Compare the sentiment of each speech to understand any noticeable differences between the speakers or across their talks
+
+3. Calculate log Odds-Ratios to explore the strength and direction of associations between specific words used in the speeches
+
+4. Produce thoughtful and representative graphs to help visualize the results and facilitate clear interpretations and explanations of the general findings and comparisons.
+
+By analyzing these TED talks, the report aims to provide insights into the communication styles, themes, and underlying messages of Jane Goodall and Dan Ariely.
+
+## Methods
+
+To address the research questions, a comprehensive text analysis will be conducted on the transcripts of four TED Talks delivered by Jane Goodall and Dan Ariely. The following procedures will be undertaken:
+
+1. Data Collection: The transcripts of all four talks will be obtained from dsEssex R data package
+
+2. Preprocessing: The transcript data will be preprocessed by removing stop words, punctuations, and converting all words to lowercase to ensure consistency. This will be done using the Tidytext package. Specifically, the unnest_tokens() function will be used to tokenize the transcripts into individual words, stop words will be removed using the antijoin() function with the stopwords dataset, and punctuations will be removed using the stringr::strreplace_all() function.
+
+3. Keyword Analysis: A keyword analysis will be performed for each talk by identifying the most frequently used words and phrases. This will be done using the Tidytext package. Specifically, the count() function will be used to count the occurrences of each word and phrase, and the top_n() function will be used to extract the top 20 most frequently used words 
+
+4. Sentiment Analysis: A sentiment analysis will be performed to determine the overall emotional tone of each talk. This will be done using sentiment analysis tools NRC lexicon. Specifically, the get_sentiments() function will be used to extract sentiment scores for each word in the transcripts using NRC lexicons. The overall sentiment score for each talk will be calculated by aggregating the sentiment scores for all words in the transcripts using the count() function.
+
+5. Log Odds Ratios: Log odds ratios will be calculated to identify the words that are most strongly associated with each speaker. This will be done using the Tidytext and Dplyr packages. Specifically, the compute_OR() function from deEssex package will be used compute the ODDs ratio before taking the LOG of the values obtained.
+
+6. Visualization: Representative and thoughtful graphs will be produced to illustrate the findings of the text analyses. The graphs will be designed in a visually appealing and informative way to convey the results effectively. This will be done using the ggplot2 package and wordcloud. Specifically, the ggplot() function will be used to create bar charts visualize the log odds ratio  and sentiment analysis results, and the wordcloud() function will be used to create word clouds to visualize the Keywords results.
+
+
+## Results
+
+#### Key Word Analysis
+
+The analysis of the speeches by Dan Ariely and Jane Goodall revealed distinct speaking styles. Dan Ariely's speeches were characterized by a focus on experiments and data to understand human behavior, with keywords such as "cheating," "money," "conflicts," "inequalities," and "wealth." He emphasized the importance of experimental research in his talks, such as in "Our Buggy Moral Code," "Beware Conflicts of Interest," and his 2015 talk of "How Equal Do We Want the World to Be? You'd Be Surprised".
+
+In contrast, Jane Goodall's talk "What Separates Us from Chimpanzees?" had a more diverse set of keywords, including "world," "chimpanzee," "human," "animal," "time," and "people." Her speaking style was descriptive and narrative, with an emphasis on storytelling to highlight the similarities between humans and animals.
+
+Despite their differences, both speakers connected with their audience by discussing human behavior. Dan Ariely used data and research to understand decision-making and behavior, while Jane Goodall emphasized the impact of our behavior on other species and our place in the natural world.
+
+Overall, the analysis provides valuable insights into the main themes and ideas presented in each talk, the speakers' use of language and rhetorical devices, and the similarities and differences in content, language, and style. Notably, Dan Ariely used specific keywords to emphasize the importance of experimental research in understanding human behavior, as seen in his use of keywords in "Our Buggy Moral Code," "Beware Conflicts of Interest," and "How Equal Do We Want the World to Be? You'd Be Surprised".
+
+```{r echo=FALSE, fig.align='center', fig.width=8, message=FALSE, warning=FALSE, paged.print=FALSE}
+# Extract our the data for the analyses
+Mydata <- ted_talks %>%
+  filter(speaker %in% c("Dan Ariely", "Jane Goodall"))
+
+# create a function for cleaning the text 
+clean_text <- function(text){
+  # Convert text to lower case
+  text <- tolower(text)
+  # Remove punctuation, extra white spaces and digits
+  text <- str_replace_all(text, "[^[:alnum:][:space:]]\\d", "")
+  # Remove extra white spaces
+  text <- str_squish(text)
+  return(text)
+}
+# Apply the function(clean_text()) to clean the text 
+Mydata$text <- clean_text(Mydata$text)
+
+Mydata %>%
+  group_by(headline) %>%                    # Group Mydata by headline 
+  unnest_tokens(word, text) %>%             # unnest the text data by wor
+  anti_join(stop_words) %>%                 # remove stop words
+  count(headline, word, sort = TRUE) %>%    # Count the number of occurrences of each word for each headline and sort in descending order
+  group_by(headline) %>%
+  top_n(10) %>%                             # Select the top 10 words for each headline
+  ungroup %>%
+  ggplot(aes(label = word, size = n, color = headline)) +  # Create a word cloud for each headline
+  geom_text_wordcloud(shape = "circle") +
+  scale_color_brewer(palette = "Dark2") +
+  ggtitle("Word Clouds for Different Headlines") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 20, face = "bold", hjust = 0.5, margin = margin(b = 20)),
+        axis.title = element_blank(),
+        axis.text = element_blank(),
+        panel.grid = element_blank(),
+        panel.spacing = unit(1, "lines"),
+        strip.text.y = element_text(margin = margin(r = 100, unit = "pt"))) +
+  facet_wrap(~headline, nrow = 2, scales = "free") +
+  guides(color = FALSE, size = guide_legend(title = "Frequency"))+
+  scale_size(range = c(4, 8))
+
+```
+
+#### Sentiment Analyses
+
+Sentiment analysis is a powerful tool that provides insight into the tone and style of speeches delivered by different speakers. The speeches delivered by Dan Ariely and Jane Goodall were analyzed using the NRC lexicon to understand their speaking styles.
+
+When comparing the sentiment scores of the four TED talks, it is evident that all four speakers touch on a range of emotions and sentiments, including positive and negative feelings.
+
+Starting with Jane Goodall's talk, "What Separates Us from Chimpanzees?", the speech primarily has a positive sentiment score, with a focus on joy, anticipation, and trust. This is fitting for the speech, which emphasizes the similarities between humans and chimpanzees and highlights the joy and wonder of observing these creatures in their natural habitats.
+
+Moving on to Dan Ariely's speeches, there is a bit more variation in sentiment scores. His talk "Our Buggy Moral Code" has a primarily negative sentiment score, with a focus on anger, disgust, and sadness. This reflects the speech's theme of exploring the flawed nature of our moral decision-making processes and the frustration that can come with realizing that our own judgments may be flawed.
+
+In contrast, "Beware Conflicts of Interest" has a more balanced sentiment score, with a mix of positive and negative emotions. This reflects the speaker's focus on the importance of recognizing and avoiding conflicts of interest and the potential dangers that can arise when we fail to do so.
+
+Finally, "How Equal Do We Want the World to Be? You’d Be Surprised" has a more positive sentiment score overall, with a focus on joy, trust, and positive emotions. This reflects the speaker's emphasis on the potential for creating a more just and equitable society and the optimism that can come from recognizing that change is possible.
+
+Overall, each speaker has their unique style and approach to their topic, and their sentiment scores reflect this. Jane Goodall's talk focuses on the wonder and joy of observing chimpanzees, while Dan Ariely's speeches delve into the flaws and challenges of human decision-making. However, all four talks share a focus on exploring complex and important ideas and encouraging the audience to think critically about the world around them.
+
+
+```{r echo=FALSE, fig.align='center', fig.height=5, fig.width=15, message=FALSE, warning=FALSE, paged.print=FALSE}
+# unnest the text data by word
+unnested <- Mydata %>%
+  unnest_tokens(word, text)%>%
+  anti_join(stop_words)
+
+# join the NRC lexicon to the unnested data
+joined <- unnested %>%
+  inner_join(get_sentiments("nrc"), by = "word")
+
+
+# Count the number of occurrences of each sentiment for each headline and speaker
+sentiment_scores <- joined %>%
+  count(headline, sentiment,speaker) 
+
+# Plot the sentiment scores for each headline and speaker
+ggplot(sentiment_scores, aes(x = sentiment, y = n, fill = speaker)) +
+  facet_wrap(~headline, scales = "free_y") +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_manual(values = c("blue", "green")) +
+  labs(x = "Sentiment", y = "n") +
+  theme(legend.position = "bottom")
+  
+
+```
+
+#### Odds Ratio
+
+The OR ratio (Odds Ratio) measures the odds of the sentiment being expressed by one speaker relative to the other. An OR ratio greater than 1 indicates that the sentiment is more likely to be expressed by the first speaker, while a ratio less than 1 indicates that the sentiment is more likely to be expressed by the second speaker. 
+
+The Log_OR (Log Odds Ratio) is the natural logarithm of the OR ratio. It is used to transform the OR ratio into a linear scale that is easier to work with. A positive Log_OR indicates that the sentiment is more likely to be expressed by the first speaker, while a negative Log_OR indicates that the sentiment is more likely to be expressed by the second speaker.
+
+Based on the log_Or ratio analysis, the themes of the three Dan Ariely talks can be compared to "What Separates Us from Chimpanzees?" by Jane Goodall.
+
+Taking Jane Goodall's talk as a base, all three of Dan Ariely's talks have various variations, and depending on the speech, the speaker usually deploy various sentiments to pass his message. However, Dan Ariely's talks genarally have a higher logOr ratio for trust and negative sentiment, indicating a focus on addressing tough human decision-making ideas.
+
+"Beware Conflicts of Interest" has a high log_Or ratio for trust, promoting ethical behavior and building trust between individuals and organizations. The talk emphasizes the negative effects of conflicts of interest, suggesting that they can lead to unethical behavior and a lack of trust.
+
+"How Equal Do We Want the World to Be? You'd Be Surprised" has a low log_Or ratio for anticipation and surprise, indicating a focus on showing the irony of the idea of equality. The talk highlights the differences between people's beliefs about equality and their actual preferences, suggesting that recognition of these differences is necessary for creating a more equal society.
+
+"Our Buggy Moral Code" has the highest log_Or ratio for disgust and anger while the lowest for joy, highlighting the negative aspects of human decision-making and suggesting the need to recognize biases to make better choices.
+
+Overall, while Jane Goodall's talk focuses on the similarities between humans and chimpanzees, the Dan Ariely talks focus on the negative aspects of human behavior and decision-making while also suggesting potential solutions and positive outcomes.
+
+
+```{r echo=FALSE, fig.align='center', fig.height=3, fig.width=10, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+# getting the Function to calculate ODDs Ratio from dsEssex
+compute_OR <- function(numerator, denominator, correction = TRUE){
+  if(correction){
+    ODDS_N = (numerator + 0.5) / (sum(numerator) - numerator + 0.5)
+    ODDS_D = (denominator + 0.5) / (sum(denominator) - denominator + 0.5)
+  } else {
+    ODDS_N = numerator / (sum(numerator) - numerator)
+    ODDS_D = denominator / (sum(denominator) - denominator)
+  }
+  return(OR = ODDS_N/ODDS_D)
+}
+
+# Pivotsentiment score wider
+sentiment_scores_wider <- sentiment_scores%>% select("headline","sentiment", "n")%>% pivot_wider(names_from = headline, values_from = n, values_fill = 0)
+
+# Create a data frame for ODDs Ratio between all Dan Ariely Speeches to Jane Goodall sppech
+ODDs_Ratio <- data.frame(
+  sentiment = sentiment_scores_wider$sentiment,
+  OR_bw = compute_OR(sentiment_scores_wider$`Beware conflicts of interest`, sentiment_scores_wider$`What separates us from chimpanzees?`),
+  OR_hw = compute_OR(sentiment_scores_wider$`How equal do we want the world to be? You'd be surprised`, sentiment_scores_wider$`What separates us from chimpanzees?`),
+  OR_ow = compute_OR(sentiment_scores_wider$`Our buggy moral code`, sentiment_scores_wider$`What separates us from chimpanzees?`)
+)
+
+# Find the Log_ODDs of the ODDs_Ratio 
+Log_Odds_Ratio <- data.frame(
+  sentiment = ODDs_Ratio$sentiment,
+  log_OR_bw = log(ODDs_Ratio$OR_bw),
+  log_OR_hw = log(ODDs_Ratio$OR_hw),
+  log_OR_ow = log(ODDs_Ratio$OR_ow)
+)
+
+
+# Melt/convert the Log-ODDs data frame to long format
+Log_Odds_Ratio_long <- reshape2::melt(Log_Odds_Ratio, id.vars = "sentiment", variable.name = "variable", value.name = "log_OR")
+
+# Plot the data using facet_wrap()
+ggplot(Log_Odds_Ratio_long, aes(sentiment, log_OR, fill = log_OR < 0)) +
+  geom_col(show.legend = FALSE) +
+  ylab("Log odds ratio") +
+  facet_wrap(~variable, scales = "free_x", ncol = 3) +
+  ggtitle("Log_OR ratio of the sentiment of Dan Ariely speeches to Jane Goodall") +
+  scale_fill_manual(name = "", values = c("darkgreen", "red")) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+
+```
+
+
+#### Conclusion
+
+In this report, we performed a comparative analysis of four TED talks given by Dan Ariely and Jane Goodall. Through text analysis, we identified the main themes and ideas presented in each talk, examined the ways in which the speakers use language and rhetorical devices to communicate their ideas, and compared the four talks in terms of content, language, and style.
+
+The analysis revealed that while the four talks have different themes and focus on different topics, both speakers use unique rhetorical devices to connect with their audience. Furthermore, the sentiment analysis showed that the emotional tone of each talk differed slightly, with Goodall's talk having a slightly more positive tone than Ariely's.
+
